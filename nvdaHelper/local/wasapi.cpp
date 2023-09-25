@@ -286,6 +286,7 @@ HRESULT WasapiPlayer::feed(unsigned char* data, unsigned int size,
 		completeStop();
 	}
 	UINT32 remainingFrames = size / format.nBlockAlign;
+	UINT64 lastSendMs = 0;
 	HRESULT hr;
 
 	// Returns false if we should abort, in which case we should return hr.
@@ -375,9 +376,11 @@ HRESULT WasapiPlayer::feed(unsigned char* data, unsigned int size,
 		data += sendBytes;
 		size -= sendBytes;
 		remainingFrames -= sendFrames;
-		sentMs += framesToMs(sendFrames);
+		lastSendMs = framesToMs(sendFrames);
+		sentMs += lastSendMs;
 	}
 
+	waitUntilNeeded(lastSendMs);
 	if (playState == PlayState::playing) {
 		maybeFireCallback();
 	}
